@@ -1,16 +1,13 @@
 package com.ricston.rest.model;
 
 import java.math.BigDecimal;
-import java.util.Date;
-
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.ricston.rest.util.CustomerDateAndTimeDeserialize;
 
 public class NewFlight {
 
 	private String flightCode;
-	@JsonDeserialize(using=CustomerDateAndTimeDeserialize .class)
-	Date date;
+//	@JsonDeserialize(using=CustomerDateAndTimeDeserialize .class)
+//	@DateTimeFormat(pattern="yyyy-MM-dd hh:mm:ss", style="yyyy-MM-dd hh:mm:ss")
+	String date;
 	String aircraftType;
 	String airlineName;
 	int departureAirportID;
@@ -25,14 +22,14 @@ public class NewFlight {
 	public void setFlightCode(String flightCode) {
 		this.flightCode = flightCode;
 	}
-
-	public Date getDate() {
-		return date;
-	}
-
-	public void setDate(Date date) {
-		this.date = date;
-	}
+//
+//	public Date getDate() {
+//		return date;
+//	}
+//
+//	public void setDate(Date date) {
+//		this.date = date;
+//	}
 
 	public String getAircraftType() {
 		return aircraftType;
@@ -80,6 +77,14 @@ public class NewFlight {
 
 	public void setSeatAvailability(short seatAvailability) {
 		this.seatAvailability = seatAvailability;
+	}
+
+	public String getDate() {
+		return date;
+	}
+
+	public void setDate(String date) {
+		this.date = date;
 	}
 
 }

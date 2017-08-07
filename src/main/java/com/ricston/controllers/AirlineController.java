@@ -1,6 +1,8 @@
 package com.ricston.controllers;
 
 import java.math.BigDecimal;
+import java.net.URI;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -8,7 +10,6 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -40,6 +41,9 @@ import com.ricston.rest.model.NewFlight;
 @RestController
 @Validated
 public class AirlineController {
+	
+	private static final String DATE_FORMAT="yyyy-MM-dd";
+	private static final String DATE_TIME_FORMAT="yyyy-MM-dd HH:mm:ss";
 
 	// Spring will auto generate the repositories bean
 	@Autowired
@@ -52,20 +56,31 @@ public class AirlineController {
 	private AirportRepository airportRepository;
 	@Autowired
 	private RouteRepository routeRepository;
-
+    
 	@RequestMapping(value = "/flights_by_date", method = RequestMethod.GET)
-	public String flightsByDate(@DateTimeFormat(pattern = "yyyy-MM-dd") @RequestParam(value = "date") Date date) {
+	public ResponseEntity<String> flightsByDate(
+			@RequestParam(value = "date") 
+			String dateStr) {
 		Gson gson = new Gson();
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-		String dateStr = sdf.format(date);
+		SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
+		sdf.setLenient(false);
+		try {
+			sdf.parse(dateStr);
+		} catch (ParseException e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body("Check date format: \""+ DATE_FORMAT + "\".");
+		}
 		List<FlightsAPassarelli> flightsFound = flightRepository.getFlightsByDate(dateStr);
 		String res = gson.toJson(flightsFound);
-		return res;
+		return ResponseEntity.status(HttpStatus.OK).body(res);
 	}
 
 	@RequestMapping(value = "/destination_by_airline", method = RequestMethod.GET)
-	public ResponseEntity<Object> destinationByAirline(@RequestParam(value = "airline") String airlineName,
-			@RequestParam(value = "pageNumber") Integer pageNumber) {
+	public ResponseEntity<Object> destinationByAirline(
+			@RequestParam(value = "airline") 
+			String airlineName,
+			@RequestParam(value = "pageNumber") 
+			Integer pageNumber) {
 		Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
 		Airline airline = airlineRepository.getAirlineByName(airlineName);
 		if (null == airline) {
@@ -93,7 +108,9 @@ public class AirlineController {
 	}
 
 	@RequestMapping(value = "/ticket_purchase", method = RequestMethod.POST)
-	public ResponseEntity<Object> ticketPurchase(@RequestBody FlighCode flightCode) {
+	public ResponseEntity<Object> ticketPurchase(
+			@RequestBody 
+			FlighCode flightCode) {
 		FlightsAPassarelli flight = flightRepository.getFlightByFlightCode(flightCode.getFlightCode());
 		if (null == flight) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Check flight code.");
@@ -101,11 +118,26 @@ public class AirlineController {
 		short sa = (flight.getSeat_Availability());
 		flight.setSeat_Availability((short) (sa - 1));
 		flightRepository.save(flight);
-		return ResponseEntity.ok("Availability changed from " + sa + " to " + (sa - 1));
+		Gson gson = new Gson();
+		String res = gson.toJson(flight);
+		return ResponseEntity.status(HttpStatus.OK).body(res);
 	}
 
 	@RequestMapping(value = "/new_flight", method = RequestMethod.PUT)
-	public ResponseEntity<String> newFlight(@RequestBody NewFlight newFlight) {
+	public ResponseEntity<String> newFlight(
+			@Validated
+			@RequestBody 
+			NewFlight newFlight) {
+		
+		SimpleDateFormat sdf = new SimpleDateFormat(DATE_TIME_FORMAT);
+		sdf.setLenient(false);
+		Date newFlightDate = null;
+		try {
+			newFlightDate = sdf.parse(newFlight.getDate());
+		} catch (ParseException e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body("Check date format: \""+ DATE_FORMAT + "\".");
+		}
 
 		Airline airline = airlineRepository.getAirlineByName(newFlight.getAirlineName());
 
@@ -119,22 +151,27 @@ public class AirlineController {
 		AircraftType aircraft = aircraftRepository.findOne(newFlight.getAircraftType());
 		Airport sourceAirport = airportRepository.findOne(newFlight.getDepartureAirportID());
 		Airport destinationAirport = airportRepository.findOne(newFlight.getDestinationAirportID());
-		FlightsAPassarelliPK fId = new FlightsAPassarelliPK(newFlight.getFlightCode(), newFlight.getDate());
+		FlightsAPassarelliPK fId = new FlightsAPassarelliPK(newFlight.getFlightCode(), newFlightDate);
 		FlightsAPassarelli f = new FlightsAPassarelli(fId, aircraft.getModel(), airline.getName(),
 				sourceAirport.getIata(), destinationAirport.getIata(), newFlight.getPrice(),
 				newFlight.getSeatAvailability());
 		// add a flight for the route
+		flightRepository.save(f);
 		try {
-			flightRepository.save(f);
-			return ResponseEntity.ok("Flight added.");
+			SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
+			dateFormat.setLenient(false);
+			String dateStr = dateFormat.format(f.getId().getDeparture_Date());
+			return ResponseEntity.created(new URI("flights_by_date?date="+dateStr)).build();
 		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Check flight data");
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Check date format: \""+ DATE_FORMAT + "\".");
 		}
 	}
 
-	// todo: PUT request with request body
 	@RequestMapping(value = "/change_price", method = RequestMethod.PUT)
-	public ResponseEntity<String> changePrice(@RequestBody ChangePrice changePrice) {
+	public ResponseEntity<String> changePrice(
+			@Validated
+			@RequestBody
+			ChangePrice changePrice) {
 		Gson gson = new Gson();
 		BigDecimal bd;
 		try {
@@ -142,7 +179,19 @@ public class AirlineController {
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Check \"amount\" value (ie: 123.45)");
 		}
-		FlightsAPassarelliPK fId = new FlightsAPassarelliPK(changePrice.getFlightCode(), changePrice.getDate());
+		
+		SimpleDateFormat sdf = new SimpleDateFormat(DATE_TIME_FORMAT);
+		sdf.setLenient(false);
+		Date flightDate = null;
+		try {
+			flightDate = sdf.parse(changePrice.getDate());
+		} catch (ParseException e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body("Check date format: \""+ DATE_TIME_FORMAT + "\".");
+		}
+
+		
+		FlightsAPassarelliPK fId = new FlightsAPassarelliPK(changePrice.getFlightCode(), flightDate);
 		FlightsAPassarelli flight = flightRepository.findOne(fId);
 		if (null == flight) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Check flight code.");

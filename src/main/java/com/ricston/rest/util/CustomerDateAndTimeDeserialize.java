@@ -10,6 +10,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
+/*
+ * used by the ChangePrice JSON deserialized object
+ */
 public class CustomerDateAndTimeDeserialize extends JsonDeserializer<Date> {
 
 	private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -19,6 +22,7 @@ public class CustomerDateAndTimeDeserialize extends JsonDeserializer<Date> {
 			throws IOException, JsonProcessingException {
 		String str = paramJsonParser.getText().trim();
 		try {
+			dateFormat.setLenient(false);
 			return dateFormat.parse(str);
 		} catch (ParseException e) {
 

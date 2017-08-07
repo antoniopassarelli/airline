@@ -1,18 +1,15 @@
 package com.ricston.rest.model;
 
-import java.util.Date;
-
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.ricston.enums.PriceAction;
-import com.ricston.rest.util.CustomerDateAndTimeDeserialize;
 
 public class ChangePrice {
 
 	PriceAction operation;
 	String amount;
 	String flightCode;
-	@JsonDeserialize(using = CustomerDateAndTimeDeserialize.class)
-	Date date;
+//	@JsonDeserialize(using = CustomerDateAndTimeDeserialize.class)
+//	@DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss", style="yyyy-MM-dd hh:mm:ss")
+	String date;
 
 	public String getAmount() {
 		return amount;
@@ -29,14 +26,15 @@ public class ChangePrice {
 	public void setFlightCode(String flightCode) {
 		this.flightCode = flightCode;
 	}
-
-	public Date getDate() {
-		return date;
-	}
-
-	public void setDate(Date date) {
-		this.date = date;
-	}
+//
+//	public Date getDate() {
+//		return date;
+//	}
+//
+//	public void setDate(Date date) {
+//		this.date = date;
+//	}
+	
 
 	public PriceAction getOperation() {
 		return operation;
@@ -44,6 +42,14 @@ public class ChangePrice {
 
 	public void setOperation(PriceAction operation) {
 		this.operation = operation;
+	}
+
+	public String getDate() {
+		return date;
+	}
+
+	public void setDate(String date) {
+		this.date = date;
 	}
 
 }
