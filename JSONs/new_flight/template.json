@@ -1,0 +1,10 @@
+{
+	"flightCode":"",
+	"date":"yyyy-MM-dd hh:mm:ss",
+	"aircraftType":"",
+	"airlineName":"",
+	"departureAirportID":,
+	"destinationAirportID":,
+	"price":000.00,
+	"seatAvailability":00
+}

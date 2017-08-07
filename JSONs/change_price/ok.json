@@ -1,0 +1,6 @@
+{
+	"operation":"increase",
+	"amount":100,
+	"flightCode":"BA001",
+	"date":"2017-03-15 20:30:00"
+}

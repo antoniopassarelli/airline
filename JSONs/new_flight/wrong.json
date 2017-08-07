@@ -1,0 +1,10 @@
+{
+	"flightCode":"XY123",
+	"date":"2017-09-15 08:05:00",
+	"aircraftType":"Boeing 737-900",
+	"airlineName":"Airlines PNG",
+	"departureAirportID":2,
+	"destinationAirportID":2,
+	"price":100.50,
+	"seatAvailability":200
+}
